@@ -1,19 +1,24 @@
-class NotFound404(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+class ScraperException(Exception):
+    """Base exception for Sushiscan Scraper."""
+    def __init__(self, message: str, level: str = "error") -> None:
+        super().__init__(message)
+        self.message = message
+        self.level = level
 
-class InvalidWebsite(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+class NotFound404(ScraperException):
+    pass
 
-class InvalidStatusCode(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+class InvalidWebsite(ScraperException):
+    pass
 
-class InvalidRangeFormat(Exception):
-    def __init__(self, *args: object) -> None:
-        super().__init__(*args)
+class InvalidStatusCode(ScraperException):
+    pass
 
-class NoResultsFound(Exception):
-    def __init__(self,*args: object) -> None:
-        super().__init__(*args)
+class InvalidRangeFormat(ScraperException):
+    pass
+
+class NoResultsFound(ScraperException):
+    pass
+
+class ChapterDownloadError(ScraperException):
+    pass

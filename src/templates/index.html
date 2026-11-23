@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="referrer" content="no-referrer">
+  <title>SushiscanScraper Ultra</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: #131c2e;
+      --card-hover: #1c2942;
+      --surface: #1e293b;
+      --border: #2a3952;
+      --primary: #06b6d4;
+      --primary-hover: #0891b2;
+      --accent: #8b5cf6;
+      --accent-glow: rgba(139, 92, 246, 0.3);
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; overflow-x: hidden; }
+
+    /* Header */
+    header {
+      background: rgba(19, 28, 46, 0.85);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .logo-area { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; color: inherit; cursor: pointer; }
+    .logo-area .logo-icon { font-size: 1.8rem; }
+    .logo-area h1 { font-size: 1.25rem; font-weight: 800; background: linear-gradient(135deg, #06b6d4, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .logo-area span.badge { font-size: 0.65rem; background: rgba(6, 182, 212, 0.15); color: var(--primary); padding: 0.2rem 0.5rem; border-radius: 999px; border: 1px solid var(--primary); font-weight: 700; }
+
+    .search-container { flex: 1; max-width: 500px; position: relative; }
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.6rem 1rem 0.6rem 2.6rem;
+      color: var(--text);
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s;
+    }
+    .search-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2); }
+    .search-icon { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 1rem; pointer-events: none; }
+
+    .header-actions { display: flex; align-items: center; gap: 0.75rem; }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+    .btn-surprise {
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+      color: white;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+    .btn-surprise:hover { transform: translateY(-1px); filter: brightness(1.1); }
+    .btn-download-monitor {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-download-monitor:hover { border-color: var(--primary); color: var(--primary); }
+    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0% { opacity: 0.4; transform: scale(0.9); } 50% { opacity: 1; transform: scale(1.2); } 100% { opacity: 0.4; transform: scale(0.9); } }
+
+    /* Filters Bar */
+    .filter-section {
+      background: #0f1626;
+      border-bottom: 1px solid var(--border);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .filter-row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+    .filter-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); min-width: 65px; }
+
+    .alphabet-bar { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+    .alpha-btn {
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 0.35rem;
+      padding: 0.25rem 0.55rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .alpha-btn:hover, .alpha-btn.active {
+      background: var(--primary);
+      color: #000;
+      border-color: var(--primary);
+    }
+
+    .genres-scroll { display: flex; gap: 0.4rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: thin; }
+    .genres-scroll::-webkit-scrollbar { height: 4px; }
+    .genres-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .genre-pill {
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+    .genre-pill:hover, .genre-pill.active {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: var(--accent);
+      color: #c4b5fd;
+    }
+
+    .sort-select {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.4rem;
+      padding: 0.3rem 0.6rem;
+      font-size: 0.8rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Main Container */
+    main { flex: 1; padding: 1.5rem; max-width: 1400px; margin: 0 auto; width: 100%; }
+
+    /* Manga Grid */
+    .grid-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+    .grid-header h2 { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+    .manga-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1.25rem;
+    }
+    .manga-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      position: relative;
+    }
+    .manga-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      border-color: var(--primary);
+    }
+    .card-thumb {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      background: #0f172a;
+      transition: transform 0.3s;
+    }
+    .manga-card:hover .card-thumb { transform: scale(1.03); }
+    .card-body { padding: 0.75rem; flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 0.5rem; }
+    .card-title { font-size: 0.9rem; font-weight: 700; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-badge {
+      font-size: 0.7rem;
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--primary);
+      padding: 0.15rem 0.45rem;
+      border-radius: 0.3rem;
+      align-self: flex-start;
+      font-weight: 600;
+    }
+
+    /* Pagination */
+    .pagination-bar { display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-top: 2rem; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+      transform: scale(0.95);
+      transition: transform 0.25s;
+    }
+    .modal-overlay.open .modal-card { transform: scale(1); }
+    .modal-header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h3 { font-size: 1.2rem; font-weight: 800; }
+    .close-btn { background: transparent; border: none; font-size: 1.5rem; color: var(--text-muted); cursor: pointer; }
+    .close-btn:hover { color: var(--text); }
+    .modal-body { padding: 1.5rem; overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    /* Manga Details Layout */
+    .detail-grid { display: grid; grid-template-columns: 200px 1fr; gap: 1.25rem; }
+    .detail-thumb { width: 100%; height: 280px; object-fit: cover; border-radius: 0.5rem; border: 1px solid var(--border); background:#0f172a; }
+    .detail-info { display: flex; flex-direction: column; gap: 0.6rem; }
+    .detail-genres { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+    .detail-genre-tag { font-size: 0.7rem; background: var(--surface); color: var(--text-muted); padding: 0.2rem 0.5rem; border-radius: 0.3rem; border: 1px solid var(--border); }
+    .detail-synopsis { font-size: 0.85rem; color: var(--text-muted); line-height: 1.4; max-height: 110px; overflow-y: auto; }
+
+    /* Chapter Selection Box */
+    .chapters-box { background: var(--surface); border: 1px solid var(--border); border-radius: 0.5rem; padding: 1rem; }
+    .chapter-quick-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .quick-btn { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); border-radius: 0.3rem; padding: 0.3rem 0.6rem; font-size: 0.75rem; cursor: pointer; }
+    .quick-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .chapters-list { max-height: 180px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.4rem; padding-right: 0.4rem; }
+    .chapter-check-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; background: rgba(255,255,255,0.03); padding: 0.25rem 0.4rem; border-radius: 0.3rem; }
+    .chapter-check-item input { cursor: pointer; }
+
+    /* Download Options */
+    .download-opts-row { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+    .download-opts-row select, .download-opts-row input {
+      background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 0.4rem; padding: 0.4rem 0.75rem; font-size: 0.85rem; outline: none;
+    }
+    .modal-footer {
+      padding: 1rem 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.75rem; background: rgba(15, 23, 42, 0.4);
+    }
+
+    /* Download Live Dashboard (Drawer/Card) */
+    .drawer-overlay {
+      position: fixed; bottom: 0; right: 0; left: 0; max-height: 380px; height: 100%;
+      background: rgba(19, 28, 46, 0.95); backdrop-filter: blur(12px); border-top: 1px solid var(--border);
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.5); z-index: 60; display: flex; flex-direction: column;
+      transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drawer-overlay.open { transform: translateY(0); }
+    .drawer-header {
+      padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-body {
+      padding: 1rem 1.5rem; display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; flex: 1; overflow: hidden;
+    }
+    .speed-graph-card {
+      background: #090d16; border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .graph-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
+    .graph-canvas { width: 100%; height: 140px; }
+    .drawer-metrics { display: flex; flex-direction: column; gap: 0.75rem; }
+    .metric-pill { background: var(--surface); padding: 0.6rem 0.9rem; border-radius: 0.5rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .metric-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+    .metric-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
+    .progress-bar-wrap { width: 100%; height: 8px; background: var(--surface); border-radius: 999px; overflow: hidden; margin-top: 0.25rem; }
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; transition: width 0.3s ease; }
+    .logs-mini { height: 90px; background: #090d16; border: 1px solid var(--border); border-radius: 0.4rem; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.7rem; color: #a5f3fc; overflow-y: auto; }
+
+    /* Loading Spinner */
+    .spinner { border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 20px; right: 20px; background: var(--surface); border: 1px solid var(--border); padding: 0.75rem 1.25rem; border-radius: 0.5rem; color: var(--text); box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    .toast.show { opacity: 1; pointer-events: auto; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="logo-area" onclick="loadCatalogue()">
+      <span class="logo-icon">🍣</span>
+      <div>
+        <h1>SushiscanScraper Ultra</h1>
+      </div>
+      <span class="badge">v2.0 PRO</span>
+    </div>
+
+    <div class="search-container">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" class="search-input" placeholder="Rechercher un manga (ex: One Piece, Solo Leveling, Naruto)..." onkeydown="if(event.key==='Enter') searchManga()">
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-surprise" onclick="openSurpriseModal()">
+        <span>🎲</span> Surprends-moi !
+      </button>
+
+      <button class="btn btn-download-monitor" onclick="toggleDownloadDrawer()">
+        <span class="pulse-dot"></span>
+        <span>Graph & Vitesse</span>
+        <span id="badgeActiveDownloads" style="display:none; background:var(--primary); color:#000; font-size:0.7rem; padding:0.1rem 0.4rem; border-radius:999px; font-weight:800;">1</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Filters Bar -->
+  <div class="filter-section">
+    <!-- Alphabet Filter -->
+    <div class="filter-row">
+      <span class="filter-label">Ordre A-Z :</span>
+      <div class="alphabet-bar" id="alphabetBar">
+        <button class="alpha-btn active" onclick="setLetter('')">TOUT</button>
+        <!-- Letters injected by JS -->
+      </div>
+    </div>
+
+    <!-- Genres / Categories -->
+    <div class="filter-row">
+      <span class="filter-label">Genres :</span>
+      <div class="genres-scroll" id="genresScroll">
+        <button class="genre-pill active" onclick="setGenre('')">🌟 Tous les genres</button>
+        {% for id, name in genres.items() %}
+          <button class="genre-pill" onclick="setGenre('{{ id }}')">{{ name }}</button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Sorting -->
+    <div class="filter-row" style="justify-content: space-between;">
+      <div style="display:flex; align-items:center; gap:0.6rem;">
+        <span class="filter-label">Trier par :</span>
+        <select id="orderSelect" class="sort-select" onchange="loadCatalogue()">
+          <option value="popular">🔥 Plus Populaires</option>
+          <option value="title">🔤 Alphabétique (A-Z)</option>
+          <option value="titlereverse">🔤 Alphabétique (Z-A)</option>
+          <option value="latest">⚡ Derniers ajouts</option>
+          <option value="update">🔄 Dernières Mises à Jour</option>
+        </select>
+      </div>
+
+      <div style="font-size:0.8rem; color:var(--text-muted);" id="resultsCount">
+        Chargement...
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main>
+    <div class="grid-header">
+      <h2 id="sectionTitle">📚 Mangas Populaires</h2>
+    </div>
+
+    <div class="manga-grid" id="mangaGrid">
+      <div style="grid-column: 1/-1; text-align:center; padding:3rem;">
+        <span class="spinner"></span>
+        <p style="margin-top:1rem; color:var(--text-muted);">Chargement du catalogue...</p>
+      </div>
+    </div>
+
+    <div class="pagination-bar">
+      <button class="btn" style="background:var(--surface);" onclick="changePage(-1)" id="btnPrevPage">⬅️ Précédent</button>
+      <span id="pageIndicator" style="font-weight:700; font-size:0.9rem;">Page 1</span>
+      <button class="btn" style="background:var(--surface);" onclick="changePage(1)" id="btnNextPage">Suivant ➡️</button>
+    </div>
+  </main>
+
+  <!-- Manga Detail Modal -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Titre du manga</h3>
+        <button class="close-btn" onclick="closeModal('detailModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-grid">
+          <img src="" id="modalThumb" class="detail-thumb" alt="Cover" onerror="this.onerror=null; this.src='https://placehold.co/200x280/1e293b/06b6d4?text=Sans+Image';">
+          <div class="detail-info">
+            <div class="detail-genres" id="modalGenres"></div>
+            <p class="detail-synopsis" id="modalSynopsis"></p>
+            <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.5rem;" id="modalStats"></div>
+          </div>
+        </div>
+
+        <div class="chapters-box">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem;">
+            <span style="font-size:0.85rem; font-weight:700;">Sélection des chapitres (<span id="selectedChapCount">0</span> sélectionnés) :</span>
+            <div class="chapter-quick-actions">
+              <button class="quick-btn" onclick="quickSelect('all')">Tout cocher</button>
+              <button class="quick-btn" onclick="quickSelect('none')">Tout décocher</button>
+              <button class="quick-btn" onclick="quickSelect('latest')">Dernier uniquement</button>
+              <button class="quick-btn" onclick="quickSelect('first5')">5 premiers</button>
+            </div>
+          </div>
+
+          <div class="chapters-list" id="chaptersList"></div>
+        </div>
+
+        <div class="download-opts-row">
+          <div>
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Format :</label>
+            <select id="downloadFormat">
+              <option value="pdf">📄 PDF (Document unique)</option>
+              <option value="cbz">📦 CBZ (Comic Book Zip)</option>
+              <option value="images">🖼️ Images (Dossier brut)</option>
+              <option value="both">✨ PDF + CBZ (Les deux)</option>
+            </select>
+          </div>
+
+          <div style="flex:1;">
+            <label style="font-size:0.75rem; color:var(--text-muted); display:block; margin-bottom:0.25rem;">Dossier de destination :</label>
+            <div style="display:flex; gap:0.4rem;">
+              <input type="text" id="downloadOutputDir" value="downloads" style="flex:1;">
+              <button class="btn" style="background:var(--surface); border:1px solid var(--border);" onclick="pickFolder()">📁 Parcourir</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" style="background:var(--surface);" onclick="closeModal('detailModal')">Annuler</button>
+        <button class="btn" style="background:linear-gradient(135deg, var(--primary), var(--accent)); color:#fff; font-weight:800;" onclick="startDownloadSelected()">
+          🚀 Lancer le Téléchargement
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Surprise Modal -->
+  <div class="modal-overlay" id="surpriseModal">
+    <div class="modal-card" style="max-width: 600px;">
+      <div class="modal-header" style="background: linear-gradient(135deg, rgba(139,92,246,0.2), transparent);">
+        <h3 style="background: linear-gradient(135deg, #a855f7, #ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+          🎉 Votre Découverte Manga Surprise !
+        </h3>
+        <button class="close-btn" onclick="closeModal('surpriseModal')">&times;</button>
+      </div>
+      <div class="modal-body" id="surpriseModalBody">
+        <div style="text-align:center; padding:2rem;">
+          <span class="spinner"></span>
+          <p style="margin-top:1rem; color:var(--text-muted);">Recherche d'une pépite aléatoire...</p>
+        </div>
+      </div>
+      <div class="modal-footer" id="surpriseFooter" style="display:none;">
+        <button class="btn btn-surprise" onclick="openSurpriseModal()">🎲 Autre pépite</button>
+        <button class="btn" style="background:var(--primary); color:#000; font-weight:800;" id="btnDownloadSurprise">📥 Télécharger</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Real-time Download Dashboard (Drawer) -->
+  <div class="drawer-overlay" id="downloadDrawer">
+    <div class="drawer-header">
+      <div style="display:flex; align-items:center; gap:0.75rem;">
+        <span class="pulse-dot"></span>
+        <h4 style="font-size:0.95rem; font-weight:800;">📊 Moniteur de Téléchargement & Graphique de Vitesse</h4>
+        <span id="drawerStatusBadge" style="font-size:0.7rem; background:rgba(6,182,212,0.2); color:var(--primary); padding:0.2rem 0.5rem; border-radius:0.3rem;">En attente</span>
+      </div>
+      <div style="display:flex; gap:0.5rem;">
+        <button class="btn" style="background:var(--danger); color:white; padding:0.3rem 0.7rem; font-size:0.75rem;" onclick="cancelDownload()">🛑 Annuler</button>
+        <button class="close-btn" onclick="toggleDownloadDrawer()">&times;</button>
+      </div>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Live Speed Canvas Graph -->
+      <div class="speed-graph-card">
+        <div class="graph-header">
+          <span>DÉBIT DE TÉLÉCHARGEMENT EN TEMPS RÉEL</span>
+          <span id="graphSpeedIndicator" style="color:var(--primary); font-family:monospace; font-size:0.9rem;">0.0 MB/s</span>
+        </div>
+        <canvas id="speedCanvas" class="graph-canvas"></canvas>
+      </div>
+
+      <!-- Metrics & Progress -->
+      <div class="drawer-metrics">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
+          <div class="metric-pill">
+            <div>
+              <div class="metric-label">Vitesse Actuelle</div>
+              <div class="metric-val" id="valCurrentSpeed">0 MB/s</div>
+            </div>
+          </div>
+          <div class="metric-pill">
+            <div>
+              <div class="metric-label">Vitesse Max</div>
+              <div class="metric-val" id="valPeakSpeed" style="color:var(--accent);">0 MB/s</div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); font-weight:600;">
+            <span id="labelCurrentTask">Aucun téléchargement actif</span>
+            <span id="labelPercent">0%</span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="progressBarFill"></div>
+          </div>
+        </div>
+
+        <div class="logs-mini" id="logsBox">
+          <div>[00:00:00] Prêt pour les téléchargements.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">Message</div>
+
+  <script>
+    // State
+    let currentGenre = '';
+    let currentLetter = '';
+    let currentPage = 1;
+    let activeMangaDetails = null;
+    let pollInterval = null;
+
+    // Helper: Proxy Image URL to bypass 403 hotlink protection
+    function getProxyImageUrl(url) {
+      if (!url) return 'https://placehold.co/200x280/1e293b/06b6d4?text=Couverture';
+      if (url.startsWith('/api/image_proxy') || url.startsWith('data:') || url.includes('placehold.co')) return url;
+      return `/api/image_proxy?url=${encodeURIComponent(url)}`;
+    }
+
+    // Canvas Speed Graph State
+    const canvas = document.getElementById('speedCanvas');
+    const ctx = canvas.getContext('2d');
+    let speedData = new Array(30).fill(0);
+
+    // Initialize Alphabet Bar
+    const alphaContainer = document.getElementById('alphabetBar');
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+    letters.forEach(l => {
+      const btn = document.createElement('button');
+      btn.className = 'alpha-btn';
+      btn.innerText = l;
+      btn.onclick = () => setLetter(l === '#' ? '0' : l);
+      alphaContainer.appendChild(btn);
+    });
+
+    function setLetter(l) {
+      currentLetter = l;
+      document.querySelectorAll('.alpha-btn').forEach(b => {
+        b.classList.toggle('active', (l === '' && b.innerText === 'TOUT') || b.innerText === l);
+      });
+      currentPage = 1;
+      loadCatalogue();
+    }
+
+    function setGenre(g) {
+      currentGenre = g;
+      document.querySelectorAll('.genre-pill').forEach(p => {
+        if (!g && p.innerText.includes('Tous')) p.classList.add('active');
+        else p.classList.toggle('active', p.getAttribute('onclick').includes(`'${g}'`));
+      });
+      currentPage = 1;
+      loadCatalogue();
+    }
+
+    function changePage(delta) {
+      if (currentPage + delta < 1) return;
+      currentPage += delta;
+      loadCatalogue();
+    }
+
+    // Load Catalogue
+    async function loadCatalogue() {
+      const order = document.getElementById('orderSelect').value;
+      const grid = document.getElementById('mangaGrid');
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;"><span class="spinner"></span><p style="margin-top:1rem; color:var(--text-muted);">Chargement du catalogue...</p></div>';
+
+      document.getElementById('sectionTitle').innerText = currentLetter
+        ? `🔤 Mangas commençant par "${currentLetter}"`
+        : (currentGenre ? `📁 Catégorie : ${getGenreName(currentGenre)}` : '📚 Catalogue des Mangas');
+
+      try {
+        const res = await fetch(`/api/catalogue?genre=${currentGenre}&order=${order}&page=${currentPage}&letter=${currentLetter}`);
+        const data = await res.json();
+        renderMangaCards(data.items);
+        document.getElementById('pageIndicator').innerText = `Page ${currentPage}`;
+        document.getElementById('resultsCount').innerText = `${data.items.length} mangas affichés`;
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--danger);">Erreur lors du chargement: ${err.message}</div>`;
+      }
+    }
+
+    function getGenreName(id) {
+      const pill = document.querySelector(`.genre-pill[onclick*="'${id}'"]`);
+      return pill ? pill.innerText : 'Genre';
+    }
+
+    // Render Cards
+    function renderMangaCards(items) {
+      const grid = document.getElementById('mangaGrid');
+      if (!items || items.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">Aucun manga trouvé pour ces critères.</div>';
+        return;
+      }
+
+      grid.innerHTML = items.map(item => `
+        <div class="manga-card" onclick="openMangaDetails('${encodeURIComponent(item.url)}')">
+          <img src="${getProxyImageUrl(item.cover)}" class="card-thumb" loading="lazy" alt="${item.title}" onerror="this.onerror=null; this.src='https://placehold.co/200x280/1e293b/06b6d4?text=Sans+Image';">
+          <div class="card-body">
+            <h4 class="card-title" title="${item.title}">${item.title}</h4>
+            ${item.latest ? `<span class="card-badge">${item.latest}</span>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Search
+    async function searchManga() {
+      const q = document.getElementById('searchInput').value.trim();
+      if (!q) { loadCatalogue(); return; }
+
+      const grid = document.getElementById('mangaGrid');
+      grid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:3rem;"><span class="spinner"></span><p style="margin-top:1rem; color:var(--text-muted);">Recherche de "' + q + '"...</p></div>';
+      document.getElementById('sectionTitle').innerText = `🔍 Résultats pour "${q}"`;
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const items = await res.json();
+        renderMangaCards(items);
+        document.getElementById('resultsCount').innerText = `${items.length} résultats`;
+      } catch (err) {
+        grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--danger);">${err.message}</div>`;
+      }
+    }
+
+    // Open Manga Details Modal
+    async function openMangaDetails(encodedUrl) {
+      const url = decodeURIComponent(encodedUrl);
+      openModal('detailModal');
+      document.getElementById('modalTitle').innerText = 'Chargement des détails...';
+      document.getElementById('modalThumb').src = '';
+      document.getElementById('modalSynopsis').innerText = '';
+      document.getElementById('modalGenres').innerHTML = '';
+      document.getElementById('chaptersList').innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:1rem;"><span class="spinner"></span></div>';
+
+      try {
+        const res = await fetch(`/api/manga/details?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
+        activeMangaDetails = data;
+
+        document.getElementById('modalTitle').innerText = data.title;
+        document.getElementById('modalThumb').src = getProxyImageUrl(data.cover);
+        document.getElementById('modalSynopsis').innerText = data.synopsis || 'Pas de synopsis disponible.';
+        document.getElementById('modalGenres').innerHTML = (data.genres || []).map(g => `<span class="detail-genre-tag">${g}</span>`).join('');
+        document.getElementById('modalStats').innerText = `Total : ${data.chapters.length} chapitres`;
+
+        // Render chapters checklist
+        const chList = document.getElementById('chaptersList');
+        chList.innerHTML = data.chapters.map(c => `
+          <label class="chapter-check-item">
+            <input type="checkbox" value="${c.index}" data-url="${c.url}" data-title="${c.title}" onchange="updateSelectedCount()">
+            <span title="${c.title}">${c.title}</span>
+          </label>
+        `).join('');
+
+        quickSelect('all');
+      } catch (err) {
+        showToast('Erreur: ' + err.message);
+      }
+    }
+
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('#chaptersList input[type="checkbox"]:checked').length;
+      document.getElementById('selectedChapCount').innerText = count;
+    }
+
+    function quickSelect(type) {
+      const boxes = document.querySelectorAll('#chaptersList input[type="checkbox"]');
+      boxes.forEach((b, idx) => {
+        if (type === 'all') b.checked = true;
+        else if (type === 'none') b.checked = false;
+        else if (type === 'latest') b.checked = (idx === boxes.length - 1);
+        else if (type === 'first5') b.checked = (idx < 5);
+      });
+      updateSelectedCount();
+    }
+
+    // Start Download
+    async function startDownloadSelected() {
+      if (!activeMangaDetails) return;
+      const checkedBoxes = Array.from(document.querySelectorAll('#chaptersList input[type="checkbox"]:checked'));
+      if (checkedBoxes.length === 0) {
+        showToast('Veuillez sélectionner au moins un chapitre.');
+        return;
+      }
+
+      const chaptersToDownload = checkedBoxes.map(b => ({
+        url: b.getAttribute('data-url'),
+        title: b.getAttribute('data-title'),
+        index: parseInt(b.value)
+      }));
+
+      const fmt = document.getElementById('downloadFormat').value;
+      const outDir = document.getElementById('downloadOutputDir').value.trim() || 'downloads';
+
+      try {
+        const res = await fetch('/api/download', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            manga_title: activeMangaDetails.title,
+            chapters: chaptersToDownload,
+            format: fmt,
+            output_dir: outDir,
+            workers: 8
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeModal('detailModal');
+          showToast(`🚀 Téléchargement de ${chaptersToDownload.length} chapitres démarré !`);
+          openDownloadDrawer();
+        } else {
+          showToast(`⚠️ ${data.error}`);
+        }
+      } catch (err) {
+        showToast('Erreur: ' + err.message);
+      }
+    }
+
+    // Folder Picker
+    async function pickFolder() {
+      try {
+        const res = await fetch('/api/select_folder', { method: 'POST' });
+        const data = await res.json();
+        if (data.folder) {
+          document.getElementById('downloadOutputDir').value = data.folder;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Surprise Modal
+    async function openSurpriseModal() {
+      openModal('surpriseModal');
+      const body = document.getElementById('surpriseModalBody');
+      const footer = document.getElementById('surpriseFooter');
+      footer.style.display = 'none';
+      body.innerHTML = '<div style="text-align:center; padding:2rem;"><span class="spinner"></span><p style="margin-top:1rem; color:var(--text-muted);">Sélection d\'un manga surprise au hasard...</p></div>';
+
+      try {
+        const res = await fetch('/api/surprise');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error);
+
+        const m = data.manga;
+        body.innerHTML = `
+          <div class="detail-grid">
+            <img src="${getProxyImageUrl(m.cover)}" class="detail-thumb" alt="${m.title}" onerror="this.onerror=null; this.src='https://placehold.co/200x280/1e293b/06b6d4?text=Sans+Image';">
+            <div class="detail-info">
+              <h3 style="font-size:1.15rem; font-weight:800; color:var(--primary);">${m.title}</h3>
+              <div class="detail-genres">
+                ${(m.genres || []).map(g => `<span class="detail-genre-tag">${g}</span>`).join('')}
+              </div>
+              <p class="detail-synopsis">${m.synopsis || 'Un excellent manga à découvrir !'}</p>
+              <div style="font-size:0.8rem; color:var(--text-muted); margin-top:0.4rem;">
+                📚 ${m.chapters.length} chapitres disponibles
+              </div>
+            </div>
+          </div>
+        `;
+
+        footer.style.display = 'flex';
+        document.getElementById('btnDownloadSurprise').onclick = () => {
+          closeModal('surpriseModal');
+          openMangaDetails(encodeURIComponent(m.url));
+        };
+      } catch (err) {
+        body.innerHTML = `<div style="text-align:center; padding:2rem; color:var(--danger);">${err.message}</div>`;
+      }
+    }
+
+    // Download Monitor & Real-Time Graph
+    function openDownloadDrawer() {
+      document.getElementById('downloadDrawer').classList.add('open');
+      startPollingStatus();
+    }
+    function toggleDownloadDrawer() {
+      const drawer = document.getElementById('downloadDrawer');
+      drawer.classList.toggle('open');
+      if (drawer.classList.contains('open')) startPollingStatus();
+    }
+
+    function startPollingStatus() {
+      if (pollInterval) clearInterval(pollInterval);
+      pollInterval = setInterval(updateDownloadTelemetry, 600);
+      updateDownloadTelemetry();
+    }
+
+    async function updateDownloadTelemetry() {
+      try {
+        const res = await fetch('/api/download/status');
+        const data = await res.json();
+
+        // Update indicators
+        const isRunning = data.status === 'running';
+        document.getElementById('badgeActiveDownloads').style.display = isRunning ? 'inline-block' : 'none';
+        document.getElementById('drawerStatusBadge').innerText = isRunning ? 'En cours' : (data.status === 'finished' ? 'Terminé' : data.status);
+        document.getElementById('drawerStatusBadge').style.color = isRunning ? 'var(--primary)' : (data.status === 'finished' ? 'var(--success)' : 'var(--text-muted)');
+
+        document.getElementById('valCurrentSpeed').innerText = `${data.speed_mbs} MB/s`;
+        document.getElementById('valPeakSpeed').innerText = `${data.peak_speed_mbs} MB/s`;
+        document.getElementById('graphSpeedIndicator').innerText = `${data.speed_mbs} MB/s`;
+
+        document.getElementById('labelCurrentTask').innerText = data.current_manga
+          ? `${data.current_manga} - ${data.current_chapter} (${data.chapter_current}/${data.chapter_total} chap)`
+          : 'Aucun téléchargement actif';
+
+        document.getElementById('labelPercent').innerText = `${data.chapter_percent}%`;
+        document.getElementById('progressBarFill').style.width = `${data.chapter_percent}%`;
+
+        // Update logs
+        const logsBox = document.getElementById('logsBox');
+        if (data.logs && data.logs.length > 0) {
+          logsBox.innerHTML = data.logs.map(l => `<div>${l}</div>`).join('');
+          logsBox.scrollTop = logsBox.scrollHeight;
+        }
+
+        // Draw Canvas Graph
+        if (data.speed_history) {
+          speedData = data.speed_history;
+          drawSpeedChart(speedData);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function cancelDownload() {
+      await fetch('/api/download/cancel', { method: 'POST' });
+      showToast('🛑 Téléchargement annulé.');
+    }
+
+    // HTML5 Canvas Real-Time Chart
+    function drawSpeedChart(history) {
+      const w = canvas.width = canvas.clientWidth;
+      const h = canvas.height = canvas.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      // Grid background lines
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      for (let y = 0; y <= h; y += h / 4) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      if (!history || history.length === 0) return;
+
+      const maxVal = Math.max(...history, 1000); // minimum 1000 KB/s scale
+      const step = w / (history.length - 1);
+
+      // Gradient Fill
+      const grad = ctx.createLinearGradient(0, 0, 0, h);
+      grad.addColorStop(0, 'rgba(6, 182, 212, 0.45)');
+      grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
+      ctx.beginPath();
+      history.forEach((val, i) => {
+        const x = i * step;
+        const y = h - (val / maxVal) * (h - 10);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+
+      // Line Stroke
+      ctx.strokeStyle = '#06b6d4';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      // Complete path for fill
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    // Modal Helpers
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    // Toast
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.innerText = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // Initial load
+    window.addEventListener('load', () => {
+      loadCatalogue();
+      startPollingStatus();
+    });
+  </script>
+</body>
+</html>
