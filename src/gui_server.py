@@ -10,12 +10,14 @@ if current_dir not in sys.path:
 
 from scraper import Scraper, GENRES, ORDER_OPTIONS
 from download_manager import DownloadManager
+from autopilot import AutoPilot, ALPHABET
 
 app = Flask(__name__, template_folder=os.path.join(current_dir, "templates"))
 
 # Global scraper and download manager instances (allows up to 2 simultaneous manga downloads + queue)
 scraper = Scraper()
 dm = DownloadManager(scraper, max_concurrent=2)
+autopilot = AutoPilot(scraper, dm)
 
 # In-memory image cache for fast cover loading
 IMAGE_CACHE = {}
@@ -135,6 +137,43 @@ def api_download_cancel():
 def api_download_clear():
     dm.clear_finished()
     return jsonify({"success": True, "message": "Historique nettoyé"})
+
+
+# ─────────────────────────── AutoPilot ─────────────────────────────────── #
+
+@app.route("/api/autopilot/start", methods=["POST"])
+def api_autopilot_start():
+    data = request.json or {}
+    fmt = data.get("format", "pdf")
+    output_dir = data.get("output_dir", "downloads")
+    letter = data.get("letter", "A")
+    if autopilot.state.enabled:
+        return jsonify({"success": False, "message": "AutoPilot déjà actif."})
+    autopilot.start(fmt=fmt, output_dir=output_dir, resume_letter=letter)
+    return jsonify({"success": True, "message": f"AutoPilot démarré depuis {letter.upper()}."})
+
+
+@app.route("/api/autopilot/stop", methods=["POST"])
+def api_autopilot_stop():
+    autopilot.stop()
+    return jsonify({"success": True, "message": "AutoPilot arrêté."})
+
+
+@app.route("/api/autopilot/pause", methods=["POST"])
+def api_autopilot_pause():
+    if autopilot.state.paused:
+        autopilot.resume()
+        return jsonify({"success": True, "message": "AutoPilot repris."})
+    else:
+        autopilot.pause()
+        return jsonify({"success": True, "message": "AutoPilot en pause."})
+
+
+@app.route("/api/autopilot/status")
+def api_autopilot_status():
+    s = autopilot.get_status()
+    s["alphabet"] = ALPHABET
+    return jsonify(s)
 
 @app.route("/api/select_folder", methods=["POST"])
 def api_select_folder():
