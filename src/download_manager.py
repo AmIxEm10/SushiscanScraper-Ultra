@@ -52,7 +52,7 @@ class DownloadManager:
             if elapsed >= 0.4:
                 kbytes = self._bytes_in_window / 1024.0
                 speed = kbytes / elapsed
-                self.speed_kbs = round(speed, 1)
+                self.speed_kbs = round(speed, 1) if self.status == "running" else 0.0
                 if self.speed_kbs > self.peak_speed_kbs:
                     self.peak_speed_kbs = self.speed_kbs
                 self.speed_history.append(self.speed_kbs)
@@ -62,6 +62,10 @@ class DownloadManager:
     def get_status(self) -> dict:
         self.update_speed_tick()
         with self.lock:
+            # If thread finished, make sure status is not running
+            if self._thread and not self._thread.is_alive() and self.status == "running":
+                self.status = "finished"
+
             return {
                 "status": self.status,
                 "error": self.error_message,
@@ -89,8 +93,10 @@ class DownloadManager:
         workers: int = 8
     ) -> bool:
         with self.lock:
-            if self.status == "running":
+            # Check if an actual download thread is alive
+            if self._thread and self._thread.is_alive() and self.status == "running":
                 return False
+
             self.status = "running"
             self.error_message = ""
             self.current_manga = manga_title
@@ -151,7 +157,6 @@ class DownloadManager:
 
                 self.add_log(f"📥 Téléchargement de {len(img_urls)} pages pour {chap_title}...")
 
-                # Download images while recording bytes and page count
                 def progress_cb(byte_count: int):
                     self.record_bytes(byte_count)
                     with self.lock:
@@ -171,9 +176,11 @@ class DownloadManager:
             with self.lock:
                 if not self._cancel_flag:
                     self.status = "finished"
+                    self.speed_kbs = 0.0
                     self.add_log(f"🎉 Tous les chapitres de '{manga_title}' ont été téléchargés avec succès !")
         except Exception as e:
             with self.lock:
                 self.status = "error"
+                self.speed_kbs = 0.0
                 self.error_message = str(e)
             self.add_log(f"❌ Erreur critique : {e}")

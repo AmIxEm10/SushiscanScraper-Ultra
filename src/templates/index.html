@@ -675,6 +675,9 @@
       try {
         const res = await fetch(`/api/manga/details?url=${encodeURIComponent(url)}`);
         const data = await res.json();
+        if (!res.ok || !data.chapters) {
+          throw new Error(data.error || 'Impossible de récupérer les chapitres de ce manga');
+        }
         activeMangaDetails = data;
 
         document.getElementById('modalTitle').innerText = data.title;
@@ -685,16 +688,21 @@
 
         // Render chapters checklist
         const chList = document.getElementById('chaptersList');
-        chList.innerHTML = data.chapters.map(c => `
-          <label class="chapter-check-item">
-            <input type="checkbox" value="${c.index}" data-url="${c.url}" data-title="${c.title}" onchange="updateSelectedCount()">
-            <span title="${c.title}">${c.title}</span>
-          </label>
-        `).join('');
-
-        quickSelect('all');
+        if (data.chapters.length === 0) {
+          chList.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:1rem; color:var(--text-muted);">Aucun chapitre disponible pour le moment.</div>';
+        } else {
+          chList.innerHTML = data.chapters.map(c => `
+            <label class="chapter-check-item">
+              <input type="checkbox" value="${c.index}" data-url="${c.url}" data-title="${c.title}" onchange="updateSelectedCount()">
+              <span title="${c.title}">${c.title}</span>
+            </label>
+          `).join('');
+          quickSelect('all');
+        }
       } catch (err) {
         showToast('Erreur: ' + err.message);
+        document.getElementById('chaptersList').innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:1.5rem; color:var(--danger);">⚠️ ${err.message}</div>`;
+        document.getElementById('modalTitle').innerText = 'Erreur de chargement';
       }
     }
 
