@@ -13,9 +13,9 @@ from download_manager import DownloadManager
 
 app = Flask(__name__, template_folder=os.path.join(current_dir, "templates"))
 
-# Global scraper and download manager instances
+# Global scraper and download manager instances (allows up to 2 simultaneous manga downloads + queue)
 scraper = Scraper()
-dm = DownloadManager(scraper)
+dm = DownloadManager(scraper, max_concurrent=2)
 
 # In-memory image cache for fast cover loading
 IMAGE_CACHE = {}
@@ -43,7 +43,6 @@ def api_image_proxy():
         r = scraper.session.get(img_url, timeout=12)
         if r.status_code == 200 and len(r.content) > 100:
             content_type = r.headers.get("Content-Type", "image/jpeg")
-            # Keep cache reasonable (max 300 covers)
             if len(IMAGE_CACHE) > 300:
                 IMAGE_CACHE.pop(next(iter(IMAGE_CACHE)))
             IMAGE_CACHE[img_url] = (r.content, content_type)
@@ -101,12 +100,12 @@ def api_download():
     chapters = data.get("chapters", [])
     fmt = data.get("format", "pdf")
     output_dir = data.get("output_dir", "downloads")
-    workers = int(data.get("workers", 8))
+    workers = int(data.get("workers", 6))
 
     if not manga_title or not chapters:
         return jsonify({"success": False, "error": "Paramètres manquants"}), 400
 
-    success = dm.start_download(
+    task = dm.add_download(
         manga_title=manga_title,
         chapters=chapters,
         fmt=fmt,
@@ -114,10 +113,8 @@ def api_download():
         workers=workers
     )
 
-    if success:
-        return jsonify({"success": True, "message": "Téléchargement démarré"})
-    else:
-        return jsonify({"success": False, "error": "Un téléchargement est déjà en cours"}), 409
+    msg = "Téléchargement démarré en simultané !" if task.status == "downloading" else "Ajouté à la file d'attente !"
+    return jsonify({"success": True, "task": task.to_dict(), "message": msg})
 
 @app.route("/api/download/status")
 def api_download_status():
@@ -125,8 +122,19 @@ def api_download_status():
 
 @app.route("/api/download/cancel", methods=["POST"])
 def api_download_cancel():
-    dm.cancel()
-    return jsonify({"success": True, "message": "Téléchargement annulé"})
+    data = request.json or {}
+    task_id = data.get("task_id")
+    if task_id:
+        dm.cancel_task(task_id)
+        return jsonify({"success": True, "message": "Tâche annulée"})
+    else:
+        dm.cancel_all()
+        return jsonify({"success": True, "message": "Tous les téléchargements ont été annulés"})
+
+@app.route("/api/download/clear", methods=["POST"])
+def api_download_clear():
+    dm.clear_finished()
+    return jsonify({"success": True, "message": "Historique nettoyé"})
 
 @app.route("/api/select_folder", methods=["POST"])
 def api_select_folder():

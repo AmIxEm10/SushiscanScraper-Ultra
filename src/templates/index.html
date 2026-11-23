@@ -272,9 +272,9 @@
 
     /* Download Live Dashboard (Drawer/Card) */
     .drawer-overlay {
-      position: fixed; bottom: 0; right: 0; left: 0; max-height: 380px; height: 100%;
-      background: rgba(19, 28, 46, 0.95); backdrop-filter: blur(12px); border-top: 1px solid var(--border);
-      box-shadow: 0 -10px 30px rgba(0,0,0,0.5); z-index: 60; display: flex; flex-direction: column;
+      position: fixed; bottom: 0; right: 0; left: 0; max-height: 480px; height: 100%;
+      background: rgba(19, 28, 46, 0.96); backdrop-filter: blur(14px); border-top: 1px solid var(--border);
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.6); z-index: 60; display: flex; flex-direction: column;
       transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .drawer-overlay.open { transform: translateY(0); }
@@ -282,20 +282,28 @@
       padding: 0.75rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;
     }
     .drawer-body {
-      padding: 1rem 1.5rem; display: grid; grid-template-columns: 1fr 340px; gap: 1.5rem; flex: 1; overflow: hidden;
+      padding: 1rem 1.5rem; display: grid; grid-template-columns: 1fr 420px; gap: 1.5rem; flex: 1; overflow: hidden;
     }
     .speed-graph-card {
       background: #090d16; border: 1px solid var(--border); border-radius: 0.5rem; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;
     }
     .graph-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); }
-    .graph-canvas { width: 100%; height: 140px; }
-    .drawer-metrics { display: flex; flex-direction: column; gap: 0.75rem; }
-    .metric-pill { background: var(--surface); padding: 0.6rem 0.9rem; border-radius: 0.5rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+    .graph-canvas { width: 100%; height: 130px; }
+    .drawer-metrics { display: flex; flex-direction: column; gap: 0.6rem; overflow: hidden; }
+    .metric-pill { background: var(--surface); padding: 0.5rem 0.8rem; border-radius: 0.5rem; border: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
     .metric-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
-    .metric-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); }
-    .progress-bar-wrap { width: 100%; height: 8px; background: var(--surface); border-radius: 999px; overflow: hidden; margin-top: 0.25rem; }
+    .metric-val { font-size: 1.05rem; font-weight: 800; color: var(--primary); }
+    .progress-bar-wrap { width: 100%; height: 6px; background: rgba(255,255,255,0.08); border-radius: 999px; overflow: hidden; }
     .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--accent)); width: 0%; transition: width 0.3s ease; }
-    .logs-mini { height: 90px; background: #090d16; border: 1px solid var(--border); border-radius: 0.4rem; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.7rem; color: #a5f3fc; overflow-y: auto; }
+    .tasks-scroll-list { display: flex; flex-direction: column; gap: 0.45rem; max-height: 180px; overflow-y: auto; padding-right: 0.2rem; }
+    .task-item-card { background: var(--surface); border: 1px solid var(--border); border-radius: 0.45rem; padding: 0.5rem 0.75rem; display: flex; flex-direction: column; gap: 0.3rem; }
+    .task-item-header { display: flex; justify-content: space-between; align-items: center; }
+    .task-status-badge { font-size: 0.65rem; padding: 0.15rem 0.45rem; border-radius: 0.25rem; font-weight: 700; }
+    .badge-downloading { background: rgba(6, 182, 212, 0.2); color: var(--primary); }
+    .badge-queued { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-completed { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-cancelled, .badge-error { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .logs-mini { height: 75px; background: #090d16; border: 1px solid var(--border); border-radius: 0.4rem; padding: 0.4rem 0.6rem; font-family: monospace; font-size: 0.7rem; color: #a5f3fc; overflow-y: auto; }
 
     /* Loading Spinner */
     .spinner { border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 0.8s linear infinite; display: inline-block; }
@@ -486,11 +494,12 @@
     <div class="drawer-header">
       <div style="display:flex; align-items:center; gap:0.75rem;">
         <span class="pulse-dot"></span>
-        <h4 style="font-size:0.95rem; font-weight:800;">📊 Moniteur de Téléchargement & Graphique de Vitesse</h4>
+        <h4 style="font-size:0.95rem; font-weight:800;">📊 File de téléchargements simultanés</h4>
         <span id="drawerStatusBadge" style="font-size:0.7rem; background:rgba(6,182,212,0.2); color:var(--primary); padding:0.2rem 0.5rem; border-radius:0.3rem;">En attente</span>
       </div>
       <div style="display:flex; gap:0.5rem;">
-        <button class="btn" style="background:var(--danger); color:white; padding:0.3rem 0.7rem; font-size:0.75rem;" onclick="cancelDownload()">🛑 Annuler</button>
+        <button class="btn" style="background:rgba(255,255,255,0.08); border:1px solid var(--border); color:var(--text-muted); padding:0.3rem 0.7rem; font-size:0.75rem;" onclick="clearFinished()">🧹 Nettoyer</button>
+        <button class="btn" style="background:var(--danger); color:white; padding:0.3rem 0.7rem; font-size:0.75rem;" onclick="cancelAllDownloads()">🛑 Tout annuler</button>
         <button class="close-btn" onclick="toggleDownloadDrawer()">&times;</button>
       </div>
     </div>
@@ -499,41 +508,49 @@
       <!-- Live Speed Canvas Graph -->
       <div class="speed-graph-card">
         <div class="graph-header">
-          <span>DÉBIT DE TÉLÉCHARGEMENT EN TEMPS RÉEL</span>
+          <span>DÉBIT GLOBAL EN TEMPS RÉEL</span>
           <span id="graphSpeedIndicator" style="color:var(--primary); font-family:monospace; font-size:0.9rem;">0.0 MB/s</span>
         </div>
         <canvas id="speedCanvas" class="graph-canvas"></canvas>
+
+        <!-- Global speed metrics under graph -->
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; margin-top:0.4rem;">
+          <div class="metric-pill" style="padding:0.4rem 0.6rem;">
+            <div>
+              <div class="metric-label">Vitesse</div>
+              <div class="metric-val" id="valCurrentSpeed" style="font-size:0.9rem;">0 MB/s</div>
+            </div>
+          </div>
+          <div class="metric-pill" style="padding:0.4rem 0.6rem;">
+            <div>
+              <div class="metric-label">Pic</div>
+              <div class="metric-val" id="valPeakSpeed" style="color:var(--accent); font-size:0.9rem;">0 MB/s</div>
+            </div>
+          </div>
+          <div class="metric-pill" style="padding:0.4rem 0.6rem;">
+            <div>
+              <div class="metric-label">En cours</div>
+              <div class="metric-val" id="valActiveCount" style="color:var(--success); font-size:0.9rem;">0 / 2</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- Metrics & Progress -->
+      <!-- Per-task List + Logs -->
       <div class="drawer-metrics">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">
-          <div class="metric-pill">
-            <div>
-              <div class="metric-label">Vitesse Actuelle</div>
-              <div class="metric-val" id="valCurrentSpeed">0 MB/s</div>
-            </div>
-          </div>
-          <div class="metric-pill">
-            <div>
-              <div class="metric-label">Vitesse Max</div>
-              <div class="metric-val" id="valPeakSpeed" style="color:var(--accent);">0 MB/s</div>
-            </div>
+        <!-- Tasks List -->
+        <div style="font-size:0.75rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em;">
+          Tâches de téléchargement (<span id="tasksTotalCount">0</span>)
+        </div>
+        <div class="tasks-scroll-list" id="tasksListContainer">
+          <div style="text-align:center; color:var(--text-muted); font-size:0.8rem; padding:1rem;">
+            Aucun téléchargement en cours. Lancez un manga !
           </div>
         </div>
 
-        <div>
-          <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--text-muted); font-weight:600;">
-            <span id="labelCurrentTask">Aucun téléchargement actif</span>
-            <span id="labelPercent">0%</span>
-          </div>
-          <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" id="progressBarFill"></div>
-          </div>
-        </div>
-
+        <!-- Logs -->
         <div class="logs-mini" id="logsBox">
-          <div>[00:00:00] Prêt pour les téléchargements.</div>
+          <div>[00:00:00] Prêt pour les téléchargements simultanés.</div>
         </div>
       </div>
     </div>
@@ -840,43 +857,97 @@
         const res = await fetch('/api/download/status');
         const data = await res.json();
 
-        // Update indicators
-        const isRunning = data.status === 'running';
-        document.getElementById('badgeActiveDownloads').style.display = isRunning ? 'inline-block' : 'none';
-        document.getElementById('drawerStatusBadge').innerText = isRunning ? 'En cours' : (data.status === 'finished' ? 'Terminé' : data.status);
-        document.getElementById('drawerStatusBadge').style.color = isRunning ? 'var(--primary)' : (data.status === 'finished' ? 'var(--success)' : 'var(--text-muted)');
+        // Badge header
+        const activeCount = data.active_count || 0;
+        const queuedCount = data.queued_count || 0;
+        const badge = document.getElementById('badgeActiveDownloads');
+        badge.style.display = activeCount > 0 ? 'inline-block' : 'none';
+        badge.innerText = activeCount;
 
-        document.getElementById('valCurrentSpeed').innerText = `${data.speed_mbs} MB/s`;
-        document.getElementById('valPeakSpeed').innerText = `${data.peak_speed_mbs} MB/s`;
-        document.getElementById('graphSpeedIndicator').innerText = `${data.speed_mbs} MB/s`;
+        // Drawer status badge
+        const drawerBadge = document.getElementById('drawerStatusBadge');
+        if (activeCount > 0) {
+          drawerBadge.innerText = `${activeCount} en cours`;
+          drawerBadge.style.color = 'var(--primary)';
+        } else if (queuedCount > 0) {
+          drawerBadge.innerText = `${queuedCount} en attente`;
+          drawerBadge.style.color = 'var(--warning)';
+        } else {
+          drawerBadge.innerText = 'Inactif';
+          drawerBadge.style.color = 'var(--text-muted)';
+        }
 
-        document.getElementById('labelCurrentTask').innerText = data.current_manga
-          ? `${data.current_manga} - ${data.current_chapter} (${data.chapter_current}/${data.chapter_total} chap)`
-          : 'Aucun téléchargement actif';
+        // Metrics
+        document.getElementById('valCurrentSpeed').innerText = `${data.speed_mbs || '0.00'} MB/s`;
+        document.getElementById('valPeakSpeed').innerText = `${data.peak_speed_mbs || '0.00'} MB/s`;
+        document.getElementById('valActiveCount').innerText = `${activeCount} / 2`;
+        if (document.getElementById('graphSpeedIndicator'))
+          document.getElementById('graphSpeedIndicator').innerText = `${data.speed_mbs || '0.00'} MB/s`;
+        const totalEl = document.getElementById('tasksTotalCount');
+        if (totalEl) totalEl.innerText = (data.tasks || []).length;
 
-        document.getElementById('labelPercent').innerText = `${data.chapter_percent}%`;
-        document.getElementById('progressBarFill').style.width = `${data.chapter_percent}%`;
+        // Render task cards
+        renderTasksList(data.tasks || []);
 
-        // Update logs
+        // Logs
         const logsBox = document.getElementById('logsBox');
         if (data.logs && data.logs.length > 0) {
           logsBox.innerHTML = data.logs.map(l => `<div>${l}</div>`).join('');
           logsBox.scrollTop = logsBox.scrollHeight;
         }
 
-        // Draw Canvas Graph
+        // Canvas graph
         if (data.speed_history) {
           speedData = data.speed_history;
           drawSpeedChart(speedData);
         }
       } catch (err) {
-        console.error(err);
+        console.error('Telemetry error:', err);
       }
     }
 
-    async function cancelDownload() {
-      await fetch('/api/download/cancel', { method: 'POST' });
-      showToast('🛑 Téléchargement annulé.');
+    function renderTasksList(tasks) {
+      const container = document.getElementById('tasksListContainer');
+      if (!container) return;
+      if (!tasks.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:1.2rem 0;">Aucun téléchargement. Lancez un manga !</div>';
+        return;
+      }
+      const badgeClass = { downloading:'badge-downloading', queued:'badge-queued', completed:'badge-completed', cancelled:'badge-cancelled', error:'badge-error' };
+      const statusLabel = { downloading:'⚡ En cours', queued:'⏳ En attente', completed:'✅ Terminé', cancelled:'🛑 Annulé', error:'❌ Erreur' };
+      container.innerHTML = tasks.map(t => `
+        <div class="task-item-card" id="task-${t.id}">
+          <div class="task-item-header">
+            <span style="font-size:0.82rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;" title="${t.manga_title}">${t.manga_title}</span>
+            <div style="display:flex;gap:0.4rem;align-items:center;">
+              <span class="task-status-badge ${badgeClass[t.status] || ''}">${statusLabel[t.status] || t.status}</span>
+              ${(t.status === 'downloading' || t.status === 'queued') ? `<button onclick="cancelTask('${t.id}')" style="background:transparent;border:none;color:var(--danger);cursor:pointer;font-size:0.95rem;line-height:1;" title="Annuler">✕</button>` : ''}
+            </div>
+          </div>
+          ${t.status === 'downloading' ? `
+            <div style="font-size:0.72rem;color:var(--text-muted);margin:0.2rem 0;">${t.current_chapter || ''} · Chap ${t.chapter_current}/${t.chapter_total} · ${(t.format||'pdf').toUpperCase()}</div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${t.percent||0}%;"></div></div>
+            <div style="font-size:0.68rem;color:var(--text-muted);text-align:right;">${t.percent||0}%</div>
+          ` : `
+            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">${t.chapter_total||0} chap · ${(t.format||'pdf').toUpperCase()}${t.error ? ' · <span style="color:var(--danger)">'+t.error+'</span>' : ''}</div>
+          `}
+        </div>
+      `).join('');
+    }
+
+    async function cancelTask(taskId) {
+      await fetch('/api/download/cancel', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ task_id: taskId }) });
+      showToast('🛑 Tâche annulée.');
+    }
+
+    async function cancelAllDownloads() {
+      await fetch('/api/download/cancel', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+      showToast('🛑 Tous les téléchargements annulés.');
+    }
+
+    async function clearFinished() {
+      await fetch('/api/download/clear', { method: 'POST' });
+      showToast('🧹 Historique nettoyé.');
     }
 
     // HTML5 Canvas Real-Time Chart
